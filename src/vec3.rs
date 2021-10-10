@@ -1,5 +1,3 @@
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
-
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
 pub struct Vec3(pub f64, pub f64, pub f64);
 
@@ -137,7 +135,6 @@ macro_rules! impl_binary_operation {
 }
 
 macro_rules! impl_unary_operation {
-
     ($operation:ident $op_fun:ident $op_symbol:tt) => {
       impl<'a> $operation for &'a Vec3 {
         type Output = Vec3;
@@ -152,8 +149,6 @@ macro_rules! impl_unary_operation {
         }
       }
 
-      // Have the operator on values forward through to the implementation
-      // above
       impl $operation for Vec3 {
         type Output = Vec3;
 
@@ -185,6 +180,8 @@ macro_rules! impl_op_assign {
       }
     };
   }
+
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 impl_binary_operation!(Add add +);
 impl_binary_operation!(Sub sub -);

@@ -1,5 +1,6 @@
 use vec3::Vec3;
 
+mod ray;
 mod vec3;
 
 fn write_color(Vec3(r, g, b): &Vec3) {
