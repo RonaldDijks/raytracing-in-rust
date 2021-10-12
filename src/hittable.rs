@@ -1,14 +1,23 @@
-use crate::{ray::Ray, vec3::Vec3};
+use std::rc::Rc;
+
+use crate::{material::Material, ray::Ray, vec3::Vec3};
 
 pub struct HitRecord {
     pub position: Vec3,
     pub normal: Vec3,
+    pub material: Rc<dyn Material>,
     pub t: f64,
     pub front_face: bool,
 }
 
 impl HitRecord {
-    pub fn new(position: Vec3, t: f64, ray: &Ray, outward_normal: &Vec3) -> Self {
+    pub fn new(
+        material: Rc<dyn Material>,
+        position: Vec3,
+        t: f64,
+        ray: &Ray,
+        outward_normal: &Vec3,
+    ) -> Self {
         let front_face = ray.direction.dot(outward_normal) < 0.0;
         let normal = if front_face {
             *outward_normal
@@ -18,6 +27,7 @@ impl HitRecord {
 
         Self {
             position,
+            material,
             normal,
             t,
             front_face,
@@ -32,11 +42,16 @@ pub trait Hittable {
 pub struct Sphere {
     pub center: Vec3,
     pub radius: f64,
+    pub material: Rc<dyn Material>,
 }
 
 impl Sphere {
-    pub fn new(center: Vec3, radius: f64) -> Self {
-        Self { center, radius }
+    pub fn new(center: Vec3, radius: f64, material: Rc<dyn Material>) -> Self {
+        Self {
+            center,
+            radius,
+            material,
+        }
     }
 }
 
@@ -64,7 +79,7 @@ impl Hittable for Sphere {
         let t = root;
         let position = ray.at(t);
         let outward_normal = (position - self.center) / self.radius;
-        let record = HitRecord::new(position, t, ray, &outward_normal);
+        let record = HitRecord::new(self.material.clone(), position, t, ray, &outward_normal);
         Some(record)
     }
 }

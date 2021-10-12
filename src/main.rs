@@ -1,7 +1,10 @@
 mod camera;
 mod hittable;
+mod material;
 mod ray;
 mod vec3;
+
+use std::rc::Rc;
 
 use camera::Camera;
 use hittable::*;
@@ -10,11 +13,22 @@ use vec3::Vec3;
 
 use rand::Rng;
 
+use crate::material::{Fuzz, Lambertian, Metal};
+
 impl Vec3 {
     pub fn format_color(&self, samples_per_pixel: u32) -> String {
-        let ir = (256.0 * (self.0 / (samples_per_pixel as f64)).sqrt().clamp(0.0, 0.999)) as u64;
-        let ig = (256.0 * (self.1 / (samples_per_pixel as f64)).sqrt().clamp(0.0, 0.999)) as u64;
-        let ib = (256.0 * (self.2 / (samples_per_pixel as f64)).sqrt().clamp(0.0, 0.999)) as u64;
+        let ir = (256.0
+            * (self.0 / (samples_per_pixel as f64))
+                .sqrt()
+                .clamp(0.0, 0.999)) as u64;
+        let ig = (256.0
+            * (self.1 / (samples_per_pixel as f64))
+                .sqrt()
+                .clamp(0.0, 0.999)) as u64;
+        let ib = (256.0
+            * (self.2 / (samples_per_pixel as f64))
+                .sqrt()
+                .clamp(0.0, 0.999)) as u64;
         format!("{} {} {}", ir, ig, ib)
     }
 }
@@ -23,15 +37,16 @@ fn ray_color(ray: &Ray, hittable: &dyn Hittable, depth: u64) -> Vec3 {
     if depth == 0 {
         Vec3::zero()
     } else if let Some(rec) = hittable.hit(ray, 0.001, f64::INFINITY) {
-        let target = rec.position + rec.normal + Vec3::random_in_unit_sphere().normalized();
-        let ray = Ray::new(rec.position, target - rec.position);
-        0.5 * ray_color(&ray, hittable, depth - 1)
+        if let Some(scat) = rec.material.scatter(ray, &rec) {
+            return scat.attenuation * ray_color(&scat.scattered, hittable, depth);
+        } else {
+            return Vec3::zero();
+        }
     } else {
         let unit_direction = ray.direction.normalized();
         let t = 0.5 * (unit_direction.1 + 1.0);
         (1.0 - t) * Vec3::one() + t * Vec3(0.5, 0.7, 1.0)
     }
-
 }
 
 fn main() {
@@ -46,14 +61,20 @@ fn main() {
     let mut rng = rand::thread_rng();
 
     // world
+    let material_ground = Rc::new(Lambertian::new(Vec3(0.8, 0.8, 0.0)));
+    let material_center = Rc::new(Lambertian::new(Vec3(0.7, 0.3, 0.3)));
+    let material_left = Rc::new(Metal::new(Vec3(0.8, 0.8, 0.8), Fuzz::new(0.3)));
+    let material_right = Rc::new(Metal::new(Vec3(0.8, 0.6, 0.2), Fuzz::new(1.0)));
+
     let world = HittableList::new(vec![
-        Box::new(Sphere::new(Vec3(0.0, 0.0, -1.0), 0.5)),
-        Box::new(Sphere::new(Vec3(0.0, -100.5, -1.0), 100.0)),
+        Box::new(Sphere::new(Vec3(0.0, -100.5, -1.0), 100.0, material_ground)),
+        Box::new(Sphere::new(Vec3(0.0, 0.0, -1.0), 0.5, material_center)),
+        Box::new(Sphere::new(Vec3(-1.0, 0.0, -1.0), 0.5, material_left)),
+        Box::new(Sphere::new(Vec3(1.0, 0.0, -1.0), 0.5, material_right)),
     ]);
 
     // camera
     let camera = Camera::default();
-
 
     // render
     println!("P3");

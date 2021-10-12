@@ -36,16 +36,29 @@ impl Vec3 {
 
     pub fn random(range: Range<f64>) -> Self {
         let mut rng = rand::thread_rng();
-        Vec3(rng.gen_range(range.clone()), rng.gen_range(range.clone()), rng.gen_range(range))
+        Vec3(
+            rng.gen_range(range.clone()),
+            rng.gen_range(range.clone()),
+            rng.gen_range(range),
+        )
     }
 
     pub fn random_in_unit_sphere() -> Self {
         loop {
             let v = Vec3::random(-1.0..1.0);
             if v.length() < 1.0 {
-                return v
+                return v;
             }
         }
+    }
+
+    pub fn random_unit_vector() -> Self {
+        Vec3::random_in_unit_sphere().normalized()
+    }
+
+    pub fn near_zero(&self) -> bool {
+        let s = 1.0e-8;
+        self.0.abs() < s && self.1.abs() < s && self.2.abs() < s
     }
 }
 
