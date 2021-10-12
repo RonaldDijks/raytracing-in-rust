@@ -30,8 +30,22 @@ impl Vec3 {
         )
     }
 
-    pub fn unit(&self) -> Vec3 {
+    pub fn normalized(&self) -> Vec3 {
         self / self.length()
+    }
+
+    pub fn random(range: Range<f64>) -> Self {
+        let mut rng = rand::thread_rng();
+        Vec3(rng.gen_range(range.clone()), rng.gen_range(range.clone()), rng.gen_range(range))
+    }
+
+    pub fn random_in_unit_sphere() -> Self {
+        loop {
+            let v = Vec3::random(-1.0..1.0);
+            if v.length() < 1.0 {
+                return v
+            }
+        }
     }
 }
 
@@ -185,7 +199,9 @@ macro_rules! impl_op_assign {
     };
   }
 
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Range, Sub, SubAssign};
+
+use rand::Rng;
 
 impl_binary_operation!(Add add +);
 impl_binary_operation!(Sub sub -);

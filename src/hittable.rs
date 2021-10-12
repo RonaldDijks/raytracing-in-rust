@@ -1,34 +1,26 @@
 use crate::{ray::Ray, vec3::Vec3};
 
-pub struct HitNormal {
+pub struct HitRecord {
+    pub position: Vec3,
     pub normal: Vec3,
+    pub t: f64,
     pub front_face: bool,
 }
 
-impl HitNormal {
-    fn create(ray: &Ray, outward_normal: &Vec3) -> Self {
+impl HitRecord {
+    pub fn new(position: Vec3, t: f64, ray: &Ray, outward_normal: &Vec3) -> Self {
         let front_face = ray.direction.dot(outward_normal) < 0.0;
         let normal = if front_face {
             *outward_normal
         } else {
             -outward_normal
         };
-        Self { front_face, normal }
-    }
-}
 
-pub struct HitRecord {
-    pub position: Vec3,
-    pub normal: HitNormal,
-    pub t: f64,
-}
-
-impl HitRecord {
-    pub fn create(normal: HitNormal, position: Vec3, t: f64) -> Self {
         Self {
-            normal,
             position,
+            normal,
             t,
+            front_face,
         }
     }
 }
@@ -72,8 +64,7 @@ impl Hittable for Sphere {
         let t = root;
         let position = ray.at(t);
         let outward_normal = (position - self.center) / self.radius;
-        let normal = HitNormal::create(ray, &outward_normal);
-        let record = HitRecord::create(normal, position, t);
+        let record = HitRecord::new(position, t, ray, &outward_normal);
         Some(record)
     }
 }
